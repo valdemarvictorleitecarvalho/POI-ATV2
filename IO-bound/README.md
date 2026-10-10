@@ -31,3 +31,19 @@ A resposta de `/io` traz os bytes gravados, o tempo total no processo (`elapsedM
 - `CLUSTER=false` — um único processo
 - `WEB_CONCURRENCY` — quantidade de workers, se for diferente do número de CPUs
 - `UV_THREADPOOL_SIZE` — threads de IO de arquivo por processo (padrão do Node: 4)
+
+## Experimentos
+
+Em `experiments/`, cada cenário provisiona a aplicação com cgroups do Linux (CPUs com `cpuset`, limite de memória e limite de banda de escrita no disco) e gera carga HTTP de fora do grupo. Funciona com cgroup v1 e v2 e precisa de root.
+
+```bash
+npm install && npm run build
+cd experiments
+sudo env "PATH=$PATH" python3 run_stress.py
+python3 plot_results.py
+```
+
+- `cgroup.py` — cria o grupo, aplica os limites e lê CPU, memória e bytes escritos
+- `monitor.py` — amostra a cada segundo CPU da aplicação, iowait, processos bloqueados, escrita em disco e RSS
+- `run_stress.py` — cenários, níveis de concorrência (1, 2, 4, 8, 16; 25 s cada) e resumo
+- `plot_results.py` — gráficos de vazão, latência p95, CPU/iowait, disco e memória
