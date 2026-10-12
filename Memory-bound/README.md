@@ -25,7 +25,7 @@ A aplicação escuta em `0.0.0.0:3000`.
 - `GET /` — o que a aplicação faz e os limites aceitos
 - `GET /health` — processo no ar, sem uso de memória
 - `GET /stats` — memória do processo que atendeu (`rssMb`, `arrayBuffersMb`, `inflightMb`) e memória livre do sistema
-- `GET /memory?sizeMb=64&holdMs=500&passes=1` — aloca `sizeMb` MB, retém por `holdMs` ms e percorre o bloco `passes` vezes; `sizeMb` de 1 a 512 (padrão 64), `holdMs` de 0 a 10000 (padrão 500), `passes` de 1 a 16 (padrão 1)
+- `GET /memory?sizeMb=64&holdMs=500&passes=1` — aloca `sizeMb` MB, retém por `holdMs` ms e percorre o bloco `passes` vezes; `sizeMb` de 1 a 512 (padrão 64), `holdMs` de 0 a 10000 (padrão 4000), `passes` de 1 a 16 (padrão 1)
 
 A resposta de `/memory` traz o tempo de alocação (`allocMs`), de retenção (`heldMs`), de acessos (`accessMs`), o total (`elapsedMs`), quantos MB já estavam em voo no processo quando a requisição chegou (`inflightAtStartMb`), o `rssMb` e o `pid` de quem atendeu.
 
@@ -37,6 +37,10 @@ A resposta de `/memory` traz o tempo de alocação (`allocMs`), de retenção (`
 - `CLUSTER=false` — um único processo
 - `WEB_CONCURRENCY` — quantidade de workers, se for diferente do número de CPUs
 - `MAX_INFLIGHT_MB` — teto de MB em voo por processo; acima dele a rota responde 503. Padrão 0, sem teto. Serve para proteger a VM do OOM killer em testes agressivos
+
+## Experimentos
+
+Os scripts que geram a carga, coletam as métricas da VM, e produzem os gráficos, estão em `experiments/`; o passo a passo está em `experiments/README.md`.
 
 ## Teste rápido
 

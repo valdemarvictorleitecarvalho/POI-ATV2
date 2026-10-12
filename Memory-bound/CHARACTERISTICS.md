@@ -23,6 +23,6 @@ Na aula de "Aplicações e Características", o perfil **memory-bound** é defin
 **Por que estes valores.**
 
 - `sizeMb` de 1 a 512 (padrão 64): o máximo foi escolhido para que uma requisição sozinha caiba mesmo numa VM pequena; a pressão de memória deve vir da concorrência, não de um pedido gigante. O mínimo e o padrão ficam fora da cache da CPU.
-- `holdMs` de 0 a 10.000 (padrão 500): 0 permite medir o custo de alocar e acessar sem sobreposição; valores maiores aumentam a sobreposição entre requisições e, com ela, a memória em uso.
+- `holdMs` de 0 a 10.000 (padrão 4000): 0 permite medir o custo de alocar e acessar sem sobreposição; valores maiores aumentam a sobreposição entre requisições e, com ela, a memória em uso.
 - `passes` de 1 a 16 (padrão 1): regula quanto tempo a requisição gasta nos acessos, sem mudar a memória usada.
 - `MAX_INFLIGHT_MB`: não faz parte do perfil. É uma proteção para a VM não travar em testes agressivos, e fica desligada por padrão. Ao medir a saturação de memória, ela deve ficar desligada, senão as respostas 503 mascaram o efeito.

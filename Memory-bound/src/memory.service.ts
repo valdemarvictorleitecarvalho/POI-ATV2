@@ -4,7 +4,7 @@ import { freemem, totalmem } from 'node:os';
 export const DEFAULT_SIZE_MB = 64;
 export const MIN_SIZE_MB = 1;
 export const MAX_SIZE_MB = 512;
-export const DEFAULT_HOLD_MS = 500;
+export const DEFAULT_HOLD_MS = 4000;
 export const MIN_HOLD_MS = 0;
 export const MAX_HOLD_MS = 10_000;
 export const DEFAULT_PASSES = 1;
