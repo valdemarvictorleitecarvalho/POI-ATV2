@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera os gráficos comparativos a partir de results.json."""
+"""Gera os gráficos comparativos a partir do results.json do teste na VM."""
 
 import json
 from pathlib import Path
@@ -18,7 +18,7 @@ REQUEST_MB = 0.25
 
 
 def label(s):
-    return f"{s['write_mbps']} MB/s, {s['cpus']} CPU, {s['memory_mb'] // 1024} GB"
+    return f"{s['write_mbps']} MB/s, {s['cpus']} vCPU, {s['memory_mb'] // 1024} GB"
 
 
 def style(axis, ylabel, xs, ylim=None):
@@ -84,9 +84,9 @@ def main():
     figure, (left, right) = plt.subplots(1, 2, figsize=(11, 5), sharex=True)
     xs = lines(left, scenarios, "cpu_pct_avg")
     lines(right, scenarios, "iowait_pct_avg")
-    style(left, "CPU da aplicação (% do provisionado)", xs, (0, 100))
+    style(left, "CPU da VM (%)", xs, (0, 100))
     style(right, "iowait da máquina (%)", xs, (0, 100))
-    left.set_title("CPU usada pela aplicação")
+    left.set_title("CPU ocupada na VM")
     right.set_title("CPU parada esperando disco")
     handles, labels = left.get_legend_handles_labels()
     figure.legend(handles, labels, loc="lower center", ncol=4, frameon=False, fontsize=9)

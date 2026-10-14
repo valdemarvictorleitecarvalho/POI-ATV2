@@ -34,16 +34,26 @@ A resposta de `/io` traz os bytes gravados, o tempo total no processo (`elapsedM
 
 ## Experimentos
 
-Em `experiments/`, cada cenário provisiona a aplicação com cgroups do Linux (CPUs com `cpuset`, limite de memória e limite de banda de escrita no disco) e gera carga HTTP de fora do grupo. Funciona com cgroup v1 e v2 e precisa de root.
+Em `experiments/vm/`, a aplicação roda na VM do VirtualBox, a carga é gerada no
+hospedeiro e o recurso provisionado que varia é a banda de escrita em disco,
+aplicada com `VBoxManage bandwidthctl`. São quatro cenários: três variam só a
+banda (5, 10 e 20 MB/s) com 1 vCPU e 1 GB, e o quarto dobra vCPUs e memória
+mantendo 10 MB/s, para mostrar que CPU e RAM extras não mudam o resultado neste
+perfil. Cada cenário passa por cinco níveis de concorrência (1, 2, 4, 8, 16;
+25 s cada).
 
 ```bash
 npm install && npm run build
-cd experiments
-sudo env "PATH=$PATH" python3 run_stress.py
+export VM_SSH_PASSWORD=osboxes.org
+cd experiments/vm
+python3 run_stress_vm.py
 python3 plot_results.py
 ```
 
-- `cgroup.py` — cria o grupo, aplica os limites e lê CPU, memória e bytes escritos
-- `monitor.py` — amostra a cada segundo CPU da aplicação, iowait, processos bloqueados, escrita em disco e RSS
-- `run_stress.py` — cenários, níveis de concorrência (1, 2, 4, 8, 16; 25 s cada) e resumo
+- `run_stress_vm.py` — cenários, provisionamento da VM, carga e coleta (roda no hospedeiro)
+- `vm_monitor.py` — amostra a cada segundo CPU, iowait, processos bloqueados, escrita em disco e RSS (roda na VM)
 - `plot_results.py` — gráficos de vazão, latência p95, CPU/iowait, disco e memória
+
+Os pré-requisitos e a leitura dos resultados estão em `experiments/vm/README.md`.
+O cache de IO do hospedeiro precisa estar desligado, senão o `fsync` para na
+memória do hospedeiro e a medição perde o sentido.
