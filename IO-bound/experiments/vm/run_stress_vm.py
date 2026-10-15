@@ -29,7 +29,7 @@ WINDOWS_VBOX = r"C:\Program Files\Oracle\VirtualBox\VBoxManage.exe"
 VBOXMANAGE = os.environ.get("VBOXMANAGE") or shutil.which("VBoxManage") or WINDOWS_VBOX
 
 VM = "cav_vm"
-SSH_TARGET = "osboxes@localhost"
+SSH_TARGET = "osboxes@127.0.0.1"
 SSH_PORT = "2222"
 APP_HOST = "127.0.0.1"
 APP_PORT = 3000
@@ -50,7 +50,7 @@ SCENARIOS = [
     {"name": "5mbps-1vcpu-1gb", "write_mbps": 5, "cpus": 1, "memory_mb": 1024},
     {"name": "10mbps-1vcpu-1gb", "write_mbps": 10, "cpus": 1, "memory_mb": 1024},
     {"name": "20mbps-1vcpu-1gb", "write_mbps": 20, "cpus": 1, "memory_mb": 1024},
-    {"name": "10mbps-2vcpu-2gb", "write_mbps": 10, "cpus": 2, "memory_mb": 2048},
+    {"name": "10mbps-1vcpu-2gb", "write_mbps": 10, "cpus": 1, "memory_mb": 2048},
 ]
 
 
@@ -104,7 +104,7 @@ def vm_info():
     return info
 
 
-def wait_ssh(attempts=40):
+def wait_ssh(attempts=100):
     for _ in range(attempts):
         probe = ssh("echo up", timeout=15, check=False, quiet=True)
         if probe.returncode == 0 and "up" in probe.stdout:
@@ -116,11 +116,15 @@ def wait_ssh(attempts=40):
 def poweroff_vm():
     password = os.environ["VM_SSH_PASSWORD"]
     ssh(f"echo {shlex.quote(password)} | sudo -S -p '' poweroff", timeout=25, check=False, quiet=True)
-    for _ in range(40):
+    for attempt in range(40):
         state = vm_info().get("VMState")
         print("estado:", state, flush=True)
         if state == "poweroff":
             return
+        if attempt == 10:
+            run([VBOXMANAGE, "controlvm", VM, "acpipowerbutton"], check=False)
+        if attempt == 25:
+            run([VBOXMANAGE, "controlvm", VM, "poweroff"], check=False)
         time.sleep(3)
     raise RuntimeError("A VM nao desligou.")
 
@@ -132,7 +136,7 @@ def attached_disk():
     for key, value in vm_info().items():
         parts = key.rsplit("-", 2)
         if len(parts) == 3 and parts[1].isdigit() and parts[2].isdigit() and value.endswith(".vdi"):
-            return parts[0], parts[1], parts[2], value
+            return parts[0], parts[1], parts[2], value.replace("\\\\", "\\")
     raise RuntimeError("Nenhum disco VDI anexado encontrado.")
 
 
@@ -213,16 +217,13 @@ def http_status(path):
 
 
 def start_app():
-    remote = f"""
-pkill -f 'dist/mai[n].js' || true
-sleep 0.5
-mkdir -p {DATA_DIR}
-rm -f {DATA_DIR}/*.bin 2>/dev/null || true
-: > {LOG}
-cd {APP_DIR}
-DATA_DIR={DATA_DIR} setsid "{NODE_BIN}" "{APP_DIR}/dist/main.js" > {LOG} 2>&1 < /dev/null &
-echo started
-"""
+    ssh("pkill -f 'dist/mai[n].js' || true", check=False, quiet=True)
+    remote = (
+        f"sleep 0.5; mkdir -p {DATA_DIR}; rm -f {DATA_DIR}/*.bin 2>/dev/null || true; "
+        f": > {LOG}; cd {APP_DIR} && "
+        f"(DATA_DIR={DATA_DIR} setsid {NODE_BIN} {APP_DIR}/dist/main.js > {LOG} 2>&1 < /dev/null &); "
+        f"echo started"
+    )
     ssh(remote, timeout=30)
     deadline = time.time() + 40
     while time.time() < deadline:
