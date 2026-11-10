@@ -1,0 +1,28 @@
+services:
+  cpu-bound:
+    image: vvictorcarvalho/poi-cpu-bound:1.0
+    container_name: cpu-bound
+    ports:
+      - "4000:3000"
+    restart: unless-stopped
+
+  memory-bound:
+    image: cesarimperas/poi-memory-bound:1.0
+    container_name: memory-bound
+    ports:
+      - "4001:3000"
+    environment:
+      MAX_INFLIGHT_MB: "320"
+    mem_limit: 512m
+    restart: unless-stopped
+
+  io-bound:
+    image: jpedro8azevedo/poi-io-bound:1.0
+    container_name: io-bound
+    ports:
+      - "4002:3000"
+    environment:
+      DATA_DIR: /data
+    volumes:
+      - /mnt/dados/io-docker:/data
+    restart: unless-stopped
