@@ -57,3 +57,48 @@ python3 plot_results.py
 Os pré-requisitos e a leitura dos resultados estão em `experiments/vm/README.md`.
 O cache de IO do hospedeiro precisa estar desligado, senão o `fsync` para na
 memória do hospedeiro e a medição perde o sentido.
+
+## Docker
+
+Imagem publicada no Docker Hub: [`jpedro8azevedo/poi-io-bound`](https://hub.docker.com/jpedro8azevedo/poi-io-bound) (tags `1.0` e `latest`, para `linux/amd64` e `linux/arm64`).
+
+### Build local
+
+```bash
+cd IO-bound
+docker build -t poi-io-bound:dev .
+```
+
+### Executar
+
+A aplicação escuta na porta 3000 do container e grava os arquivos de teste em `/data` (`DATA_DIR`). Para os `fsync` irem para um disco do host, monte uma pasta em `/data`:
+
+```bash
+docker run --rm -p 3000:3000 -v "$PWD/data:/data" poi-io-bound:dev
+```
+
+Teste:
+
+```bash
+curl http://localhost:3000/health
+curl "http://localhost:3000/io?sizeKb=256&syncs=4"
+```
+
+| Variável | Padrão | Uso |
+| --- | --- | --- |
+| `PORT` | `3000` | Porta da aplicação dentro do container |
+| `DATA_DIR` | `/data` | Pasta onde cada requisição grava e apaga o arquivo |
+| `NODE_ENV` | `production` | Modo de execução do Nest |
+
+O container tem `HEALTHCHECK` em `GET /health`, então `docker ps` mostra `healthy` quando a aplicação responde.
+
+### Publicar (amd64 e arm64)
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t jpedro8azevedo/poi-io-bound:1.0 -t jpedro8azevedo/poi-io-bound:latest --push .
+```
+
+### Deploy na vm-grupo1
+
+No `docker-compose.yml` da raiz (branch `docker/compose`), o serviço `io-bound` usa a imagem publicada, expõe a porta `4002` da VM e liga `/data` à pasta `/mnt/dados/io-docker`, no volume do Cinder. Pelo balanceador, a aplicação fica em `http://150.165.85.77:9003`.
