@@ -29,3 +29,10 @@ A resposta de `/compute` traz a quantidade de primos, o tempo de cálculo no pro
 - `PORT` — porta (padrão 3000)
 - `CLUSTER=false` — um único processo
 - `WEB_CONCURRENCY` — quantidade de workers, se for diferente do número de CPUs
+
+## Docker
+
+Imagem: https://hub.docker.com/r/vvictorcarvalho/poi-cpu-bound
+
+    docker run --rm -p 3000:3000 vvictorcarvalho/poi-cpu-bound:1.0
+    curl "http://localhost:3000/compute?limit=100000"
